@@ -13,19 +13,32 @@
         box-sizing: border-box;
       }
 
-      body {
-        background-color: #ffffff;
-        height: 100vh;
+      html, body {
+        width: 100%;
+        height: 100%;
         overflow: hidden;
+        background: #ffffff;
+      }
+
+      /* Fixed 1920x1080 canvas — sized independently of the webview viewport */
+      #canvas {
+        position: absolute;
+        width: 1920px;
+        height: 1080px;
+        top: 0;
+        left: 0;
+        background: #ffffff;
         display: flex;
         justify-content: center;
+        will-change: transform;
       }
 
       .columns-container {
         display: flex;
-        gap: 6.3vw;
-        width: 90.7vw;
-        height: 100vh;
+        gap: 121px;
+        width: 1741px;
+        height: 1080px;
+        flex-shrink: 0;
       }
 
       .column {
@@ -47,7 +60,7 @@
         width: 100%;
         aspect-ratio: 1;
         background: #ffffff;
-        margin-bottom: 6.3vw;
+        margin-bottom: 121px;
         overflow: hidden;
       }
 
@@ -59,7 +72,7 @@
       }
 
       .name-backdrop {
-        position: fixed;
+        position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -68,7 +81,7 @@
       }
 
       .name-overlay {
-        position: fixed;
+        position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -83,13 +96,15 @@
     </style>
   </head>
   <body>
-    <div class="columns-container" id="columns-container"></div>
-    <div class="name-backdrop" id="name-backdrop"></div>
-    <div class="name-overlay">kenji moss</div>
+    <div id="canvas">
+      <div class="columns-container" id="columns-container"></div>
+      <div class="name-backdrop" id="name-backdrop"></div>
+      <div class="name-overlay">kenji moss</div>
+    </div>
 
     <script>
       const REPEATS = 3;
-      const GAP_VW = 6.3; // must match CSS gap and cell margin-bottom
+      const GAP_PX = 121; // matches CSS gap and cell margin-bottom
 
       const images = [
         '01-soonju-chair-full-front-transparent.png',
@@ -119,7 +134,6 @@
         '04-libby-final-south-elevation.jpg',
       ];
 
-      // Distribute images across 6 columns in round-robin order
       const colImages = [[], [], [], [], [], []];
       images.forEach((img, i) => colImages[i % 6].push(img));
 
@@ -158,19 +172,17 @@
       }
 
       function initSizes() {
-        const gapPx = GAP_VW / 100 * window.innerWidth;
         const colWidth = columns[0].getBoundingClientRect().width;
         const cellHeight = colWidth;
-        const cellStep = cellHeight + gapPx;
+        const cellStep = cellHeight + GAP_PX;
 
         oneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
-        const backdrop = document.getElementById('name-backdrop');
-        backdrop.style.width  = (2.5 * cellHeight + gapPx) + 'px';
-        backdrop.style.height = (1.5 * cellHeight) + 'px';
+        const topPad = Math.max(0, (1080 - (3 * cellHeight + 2 * GAP_PX)) / 2);
 
-        const viewH = window.innerHeight;
-        const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
+        const backdrop = document.getElementById('name-backdrop');
+        backdrop.style.width  = (2.5 * cellHeight + GAP_PX) + 'px';
+        backdrop.style.height = (1.5 * cellHeight) + 'px';
 
         strips.forEach((strip, i) => {
           offsets[i] = oneSetHeights[i];
@@ -193,7 +205,16 @@
 
       buildCells();
       initSizes();
-      window.addEventListener('resize', initSizes);
+
+      // When loaded inside the tab browser, pan the canvas to match the tab window's screen position
+      try {
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('scroll-to', (e, { x, y }) => {
+          document.getElementById('canvas').style.transform = `translate(-${x}px, -${y}px)`;
+        });
+      } catch (_) {
+        // Running outside Electron (normal browser) — no panning needed
+      }
     </script>
   </body>
 </html>
