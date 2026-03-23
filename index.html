@@ -166,8 +166,8 @@
         oneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
         const backdrop = document.getElementById('name-backdrop');
-        backdrop.style.width  = (2 * cellHeight + gapPx) + 'px';
-        backdrop.style.height = cellHeight + 'px';
+        backdrop.style.width  = (2.5 * cellHeight + gapPx) + 'px';
+        backdrop.style.height = (1.5 * cellHeight) + 'px';
 
         const viewH = window.innerHeight;
         const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
