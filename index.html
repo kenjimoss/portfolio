@@ -202,10 +202,15 @@
         }, { passive: false });
       });
 
-      // Called by the tab browser via webview.executeJavaScript() to pan the canvas
-      window.__pan = (x, y) => {
-        canvas.style.transform = `translate(-${x}px, -${y}px)`;
-      };
+      // Pan the canvas when loaded inside the tab browser
+      try {
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('pan', (e, x, y) => {
+          canvas.style.transform = `translate(-${x}px, -${y}px)`;
+        });
+      } catch(e) {
+        // Not running inside Electron — panning not needed
+      }
 
       buildCells();
       initSizes();
