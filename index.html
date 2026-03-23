@@ -13,30 +13,19 @@
         box-sizing: border-box;
       }
 
-      html, body {
-        width: 100%;
-        height: 100%;
+      body {
+        background-color: #ffffff;
+        height: 100vh;
         overflow: hidden;
-        background: #ffffff;
-      }
-
-      #canvas {
-        position: absolute;
-        width: 1920px;
-        height: 1080px;
-        top: 0;
-        left: 0;
-        background: #ffffff;
         display: flex;
         justify-content: center;
       }
 
       .columns-container {
         display: flex;
-        gap: 121px;
-        width: 1741px;
-        height: 1080px;
-        flex-shrink: 0;
+        gap: 6.3vw;
+        width: 90.7vw;
+        height: 100vh;
       }
 
       .column {
@@ -58,7 +47,7 @@
         width: 100%;
         aspect-ratio: 1;
         background: #ffffff;
-        margin-bottom: 121px;
+        margin-bottom: 6.3vw;
         overflow: hidden;
       }
 
@@ -70,7 +59,7 @@
       }
 
       .name-backdrop {
-        position: absolute;
+        position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -79,7 +68,7 @@
       }
 
       .name-overlay {
-        position: absolute;
+        position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -94,15 +83,13 @@
     </style>
   </head>
   <body>
-    <div id="canvas">
-      <div class="columns-container" id="columns-container"></div>
-      <div class="name-backdrop" id="name-backdrop"></div>
-      <div class="name-overlay">kenji moss</div>
-    </div>
+    <div class="columns-container" id="columns-container"></div>
+    <div class="name-backdrop" id="name-backdrop"></div>
+    <div class="name-overlay">kenji moss</div>
 
     <script>
       const REPEATS = 3;
-      const GAP_PX = 121; // matches CSS gap and cell margin-bottom
+      const GAP_VW = 6.3; // must match CSS gap and cell margin-bottom
 
       const images = [
         '01-soonju-chair-full-front-transparent.png',
@@ -132,10 +119,10 @@
         '04-libby-final-south-elevation.jpg',
       ];
 
+      // Distribute images across 6 columns in round-robin order
       const colImages = [[], [], [], [], [], []];
       images.forEach((img, i) => colImages[i % 6].push(img));
 
-      const canvas = document.getElementById('canvas');
       const container = document.getElementById('columns-container');
       const offsets = new Array(6).fill(0);
       let oneSetHeights = new Array(6).fill(0);
@@ -171,17 +158,19 @@
       }
 
       function initSizes() {
+        const gapPx = GAP_VW / 100 * window.innerWidth;
         const colWidth = columns[0].getBoundingClientRect().width;
         const cellHeight = colWidth;
-        const cellStep = cellHeight + GAP_PX;
+        const cellStep = cellHeight + gapPx;
 
         oneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
-        const topPad = Math.max(0, (1080 - (3 * cellHeight + 2 * GAP_PX)) / 2);
-
         const backdrop = document.getElementById('name-backdrop');
-        backdrop.style.width  = (2.5 * cellHeight + GAP_PX) + 'px';
+        backdrop.style.width  = (2.5 * cellHeight + gapPx) + 'px';
         backdrop.style.height = (1.5 * cellHeight) + 'px';
+
+        const viewH = window.innerHeight;
+        const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
 
         strips.forEach((strip, i) => {
           offsets[i] = oneSetHeights[i];
@@ -202,18 +191,9 @@
         }, { passive: false });
       });
 
-      // Pan the canvas when loaded inside the tab browser
-      try {
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.on('pan', (e, x, y) => {
-          canvas.style.transform = `translate(-${x}px, -${y}px)`;
-        });
-      } catch(e) {
-        // Not running inside Electron — panning not needed
-      }
-
       buildCells();
       initSizes();
+      window.addEventListener('resize', initSizes);
     </script>
   </body>
 </html>
