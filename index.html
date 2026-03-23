@@ -20,7 +20,6 @@
         background: #ffffff;
       }
 
-      /* Fixed 1920x1080 canvas — sized independently of the webview viewport */
       #canvas {
         position: absolute;
         width: 1920px;
@@ -30,7 +29,6 @@
         background: #ffffff;
         display: flex;
         justify-content: center;
-        will-change: transform;
       }
 
       .columns-container {
@@ -137,6 +135,7 @@
       const colImages = [[], [], [], [], [], []];
       images.forEach((img, i) => colImages[i % 6].push(img));
 
+      const canvas = document.getElementById('canvas');
       const container = document.getElementById('columns-container');
       const offsets = new Array(6).fill(0);
       let oneSetHeights = new Array(6).fill(0);
@@ -203,18 +202,13 @@
         }, { passive: false });
       });
 
+      // Called by the tab browser via webview.executeJavaScript() to pan the canvas
+      window.__pan = (x, y) => {
+        canvas.style.transform = `translate(-${x}px, -${y}px)`;
+      };
+
       buildCells();
       initSizes();
-
-      // When loaded inside the tab browser, pan the canvas to match the tab window's screen position
-      try {
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.on('scroll-to', (e, { x, y }) => {
-          document.getElementById('canvas').style.transform = `translate(-${x}px, -${y}px)`;
-        });
-      } catch (_) {
-        // Running outside Electron (normal browser) — no panning needed
-      }
     </script>
   </body>
 </html>
