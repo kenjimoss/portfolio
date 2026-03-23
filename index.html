@@ -16,21 +16,133 @@
       body {
         background-color: #ffffff;
         height: 100vh;
+        overflow: hidden;
         display: flex;
-        align-items: center;
+        justify-content: center;
       }
 
-      h1 {
+      .columns-container {
+        display: flex;
+        gap: 3vw;
+        width: 80vw;
+        height: 100vh;
+      }
+
+      .column {
+        flex: 1;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .column-strip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        will-change: transform;
+      }
+
+      .cell {
+        width: 100%;
+        aspect-ratio: 1;
+        background: #4b4b4b;
+        margin-bottom: 3vw;
+      }
+
+      .name-overlay {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         font-family: "Jura", sans-serif;
         font-weight: 300;
         font-size: 4rem;
         color: #4b4b4b;
-        width: 100%;
-        text-align: center;
+        z-index: 10;
+        pointer-events: none;
+        white-space: nowrap;
       }
     </style>
   </head>
   <body>
-    <h1>kenji moss</h1>
+    <div class="columns-container" id="columns-container"></div>
+    <div class="name-overlay">kenji moss</div>
+
+    <script>
+      const COLS = 6;
+      const CELLS_PER_COL = 8;
+      const REPEATS = 3;
+      const GAP_VW = 3;
+
+      const container = document.getElementById('columns-container');
+      const offsets = new Array(COLS).fill(0);
+      let oneSetHeight = 0;
+
+      // Build columns
+      const columns = [];
+      const strips = [];
+      for (let i = 0; i < COLS; i++) {
+        const col = document.createElement('div');
+        col.className = 'column';
+        const strip = document.createElement('div');
+        strip.className = 'column-strip';
+        col.appendChild(strip);
+        container.appendChild(col);
+        columns.push(col);
+        strips.push(strip);
+      }
+
+      // Populate each strip with REPEATS copies of CELLS_PER_COL cells
+      function buildCells() {
+        strips.forEach(strip => {
+          for (let r = 0; r < REPEATS; r++) {
+            for (let c = 0; c < CELLS_PER_COL; c++) {
+              const cell = document.createElement('div');
+              cell.className = 'cell';
+              strip.appendChild(cell);
+            }
+          }
+        });
+      }
+
+      function initSizes() {
+        const gapPx = GAP_VW / 100 * window.innerWidth;
+        const colWidth = columns[0].getBoundingClientRect().width;
+        const cellHeight = colWidth; // square
+        const cellStep = cellHeight + gapPx;
+        oneSetHeight = cellStep * CELLS_PER_COL;
+
+        // Pad the top of each strip so 3 rows are vertically centered on load
+        const viewH = window.innerHeight;
+        const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
+
+        // Start in the middle copy so scrolling works in both directions immediately
+        offsets.fill(oneSetHeight);
+
+        strips.forEach(strip => {
+          strip.style.paddingTop = topPad + 'px';
+          strip.style.transform = `translateY(-${oneSetHeight}px)`;
+        });
+      }
+
+      // Independent scroll per column
+      columns.forEach((col, i) => {
+        col.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          offsets[i] += e.deltaY;
+
+          // Keep offset within [oneSetHeight, 2 * oneSetHeight) for seamless looping
+          if (offsets[i] >= 2 * oneSetHeight) offsets[i] -= oneSetHeight;
+          if (offsets[i] < oneSetHeight) offsets[i] += oneSetHeight;
+
+          strips[i].style.transform = `translateY(-${offsets[i]}px)`;
+        }, { passive: false });
+      });
+
+      buildCells();
+      initSizes();
+      window.addEventListener('resize', initSizes);
+    </script>
   </body>
 </html>
