@@ -162,13 +162,15 @@
         });
       }
 
-      function initSizes() {
+      let prevCellStep = 0;
+
+      function initSizes(preserveScroll = false) {
         const gapPx = GAP_VW / 100 * window.innerWidth;
         const colWidth = columns[0].getBoundingClientRect().width;
         const cellHeight = colWidth;
         const cellStep = cellHeight + gapPx;
 
-        oneSetHeights = colImages.map(imgs => imgs.length * cellStep);
+        const newOneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
         const backdrop = document.getElementById('name-backdrop');
         backdrop.style.width  = (2.5 * cellHeight + gapPx) + 'px';
@@ -178,10 +180,20 @@
         const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
 
         strips.forEach((strip, i) => {
-          offsets[i] = oneSetHeights[i];
+          if (preserveScroll && prevCellStep > 0 && oneSetHeights[i] > 0) {
+            const relative = offsets[i] - oneSetHeights[i];
+            offsets[i] = newOneSetHeights[i] + relative * (cellStep / prevCellStep);
+            while (offsets[i] >= 2 * newOneSetHeights[i]) offsets[i] -= newOneSetHeights[i];
+            while (offsets[i] <      newOneSetHeights[i]) offsets[i] += newOneSetHeights[i];
+          } else {
+            offsets[i] = newOneSetHeights[i];
+          }
           strip.style.paddingTop = topPad + 'px';
           strip.style.transform = `translateY(-${offsets[i]}px)`;
         });
+
+        oneSetHeights = newOneSetHeights;
+        prevCellStep = cellStep;
       }
 
       columns.forEach((col, i) => {
@@ -196,9 +208,15 @@
         }, { passive: false });
       });
 
+      let resizeTimer;
+      function onResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => initSizes(true), 150);
+      }
+
       buildCells();
       initSizes();
-      window.addEventListener('resize', initSizes);
+      window.addEventListener('resize', onResize);
     </script>
   </body>
 </html>
