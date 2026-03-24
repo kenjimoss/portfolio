@@ -208,10 +208,15 @@
         }, { passive: false });
       });
 
-      let resizeTimer;
+      let resizePending = false;
       function onResize() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => initSizes(true), 150);
+        if (!resizePending) {
+          resizePending = true;
+          requestAnimationFrame(() => {
+            initSizes(true);
+            resizePending = false;
+          });
+        }
       }
 
       buildCells();
