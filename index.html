@@ -296,17 +296,13 @@
           return;
         }
 
-        // Perspective distance — larger = less extreme distortion
-        const d = 1000;
-        const h = window.innerHeight;
+        const PERSPECTIVE_PX = 1200; // viewing distance — lower = more dramatic
+        const MAX_TILT_DEG  = 35;   // maximum rotation at full trapezoid — lower = more subtle
 
-        // Solve: topScale = d / (d + h * sin(theta))
-        // => sin(theta) = d * (1/topScale - 1) / h
-        const sinTheta = Math.max(-1, Math.min(1, d * (1 / topScale - 1) / h));
-        const thetaDeg = Math.asin(sinTheta) * 180 / Math.PI;
+        const thetaDeg = (1 - topScale) * MAX_TILT_DEG;
 
         container.style.transformOrigin = '50% 100%';
-        container.style.transform = `perspective(${d}px) rotateX(${thetaDeg}deg)`;
+        container.style.transform = `perspective(${PERSPECTIVE_PX}px) rotateX(${thetaDeg}deg)`;
       }
     </script>
   </body>
