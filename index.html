@@ -266,6 +266,23 @@
       buildCells();
       initSizes();
       window.addEventListener('resize', onResize);
+
+      let shapeData = null;
+
+      try {
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('shape-update', (event, data) => {
+          shapeData = data;
+          applyPerspective(data);
+        });
+      } catch (e) {
+        // Not running inside Electron webview — ignore
+      }
+
+      function applyPerspective(data) {
+        // Placeholder — Step 3 will implement this
+        console.log('shape-update received:', data);
+      }
     </script>
   </body>
 </html>
