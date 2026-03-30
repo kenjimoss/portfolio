@@ -281,32 +281,115 @@
           return;
         }
 
-        const v = data.vertices;
-        // v[0]=topLeft, v[1]=topRight, v[2]=bottomRight, v[3]=bottomLeft (normalized 0-1)
-        const topWidth = v[1].x - v[0].x;
-        const bottomWidth = v[2].x - v[3].x;
+        const MARGIN = 20; // px inset from each trapezoid edge
 
-        if (bottomWidth <= 0) return;
+        const v = data.vertices; // normalized 0-1, order: TL, TR, BR, BL
+        const vW = window.innerWidth;
+        const vH = window.innerHeight;
 
-        const topScale = topWidth / bottomWidth;
+        // Convert normalized vertices to viewport px
+        const p = v.map(pt => ({ x: pt.x * vW, y: pt.y * vH }));
 
-        if (Math.abs(topScale - 1) < 0.001) {
-          container.style.transform = '';
-          container.style.transformOrigin = '';
-          return;
+        // Inset each edge inward by MARGIN px using the edge's inward normal.
+        // Polygon order TL→TR→BR→BL is clockwise in screen coords,
+        // so the inward normal for edge (a→b) is (-dy, dx) / len.
+        function insetEdge(a, b) {
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const nx = -dy / len * MARGIN, ny = dx / len * MARGIN;
+          return { p1: { x: a.x + nx, y: a.y + ny },
+                   p2: { x: b.x + nx, y: b.y + ny } };
         }
 
-        const PERSPECTIVE_PX = 1200; // viewing distance — lower = more dramatic
-        const MAX_TILT_DEG  = 35;   // maximum rotation at full trapezoid — lower = more subtle
+        // Find intersection of two lines each defined by two points
+        function lineIntersect(l1, l2) {
+          const x1 = l1.p1.x, y1 = l1.p1.y, x2 = l1.p2.x, y2 = l1.p2.y;
+          const x3 = l2.p1.x, y3 = l2.p1.y, x4 = l2.p2.x, y4 = l2.p2.y;
+          const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+          if (Math.abs(d) < 1e-10) return { x: (x1 + x3) / 2, y: (y1 + y3) / 2 };
+          const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
+          return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
+        }
 
-        const thetaDeg = (1 - topScale) * MAX_TILT_DEG;
-        const thetaRad = thetaDeg * Math.PI / 180;
-        const h = window.innerHeight;
-        const denom = PERSPECTIVE_PX * Math.cos(thetaRad) - h * Math.sin(thetaRad);
-        const scaleY = denom > 0 ? PERSPECTIVE_PX / denom : 1;
+        // Inset all four edges
+        const e = [
+          insetEdge(p[0], p[1]), // top
+          insetEdge(p[1], p[2]), // right
+          insetEdge(p[2], p[3]), // bottom
+          insetEdge(p[3], p[0]), // left
+        ];
 
-        container.style.transformOrigin = '50% 100%';
-        container.style.transform = `perspective(${PERSPECTIVE_PX}px) rotateX(${thetaDeg}deg) scaleY(${scaleY})`;
+        // Inset corners = intersections of adjacent inset edges
+        const dst = [
+          lineIntersect(e[3], e[0]), // TL: left ∩ top
+          lineIntersect(e[0], e[1]), // TR: top ∩ right
+          lineIntersect(e[1], e[2]), // BR: right ∩ bottom
+          lineIntersect(e[2], e[3]), // BL: bottom ∩ left
+        ];
+
+        // Container's natural position in viewport (without transform)
+        const cW = container.offsetWidth;
+        const cH = container.offsetHeight;
+        const L = (vW - cW) / 2;
+        const T = 0;
+
+        // Convert destination corners to element-local coordinates
+        const dstL = dst.map(pt => ({ x: pt.x - L, y: pt.y - T }));
+
+        // Compute homography: source rectangle [0,cW]×[0,cH] → dstL (TL,TR,BR,BL)
+        const H = computeHomography(
+          [0,  cW, cW, 0 ],
+          [0,  0,  cH, cH],
+          dstL.map(pt => pt.x),
+          dstL.map(pt => pt.y)
+        );
+
+        // CSS matrix3d expects column-major 4x4.
+        // 2D homography [[h00,h01,h02],[h10,h11,h12],[h20,h21,h22]] embeds as:
+        // | h00  h01  0  h02 |
+        // | h10  h11  0  h12 |
+        // |  0    0   1   0  |
+        // | h20  h21  0  h22 |
+        container.style.transformOrigin = '0 0';
+        container.style.transform = `matrix3d(
+          ${H[0][0]},${H[1][0]},0,${H[2][0]},
+          ${H[0][1]},${H[1][1]},0,${H[2][1]},
+          0,0,1,0,
+          ${H[0][2]},${H[1][2]},0,${H[2][2]})`;
+      }
+
+      // Compute 3×3 homography matrix mapping 4 source points to 4 destination points.
+      // Returns H as [[row0],[row1],[row2]] with H[2][2] = 1.
+      function computeHomography(srcX, srcY, dstX, dstY) {
+        const A = [], b = [];
+        for (let i = 0; i < 4; i++) {
+          const x = srcX[i], y = srcY[i], u = dstX[i], v = dstY[i];
+          A.push([x, y, 1, 0, 0, 0, -x * u, -y * u]);
+          b.push(u);
+          A.push([0, 0, 0, x, y, 1, -x * v, -y * v]);
+          b.push(v);
+        }
+        const h = gaussSolve(A, b);
+        return [[h[0], h[1], h[2]], [h[3], h[4], h[5]], [h[6], h[7], 1]];
+      }
+
+      // Solve 8×8 linear system Ax = b via Gaussian elimination with partial pivoting.
+      function gaussSolve(A, b) {
+        const n = 8;
+        const M = A.map((row, i) => [...row, b[i]]);
+        for (let col = 0; col < n; col++) {
+          let maxRow = col;
+          for (let row = col + 1; row < n; row++) {
+            if (Math.abs(M[row][col]) > Math.abs(M[maxRow][col])) maxRow = row;
+          }
+          [M[col], M[maxRow]] = [M[maxRow], M[col]];
+          for (let row = 0; row < n; row++) {
+            if (row === col || Math.abs(M[col][col]) < 1e-12) continue;
+            const f = M[row][col] / M[col][col];
+            for (let k = col; k <= n; k++) M[row][k] -= f * M[col][k];
+          }
+        }
+        return M.map((row, i) => row[n] / row[i]);
       }
     </script>
   </body>
