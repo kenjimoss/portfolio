@@ -300,9 +300,13 @@
         const MAX_TILT_DEG  = 35;   // maximum rotation at full trapezoid — lower = more subtle
 
         const thetaDeg = (1 - topScale) * MAX_TILT_DEG;
+        const thetaRad = thetaDeg * Math.PI / 180;
+        const h = window.innerHeight;
+        const denom = PERSPECTIVE_PX * Math.cos(thetaRad) - h * Math.sin(thetaRad);
+        const scaleY = denom > 0 ? PERSPECTIVE_PX / denom : 1;
 
         container.style.transformOrigin = '50% 100%';
-        container.style.transform = `perspective(${PERSPECTIVE_PX}px) rotateX(${thetaDeg}deg)`;
+        container.style.transform = `perspective(${PERSPECTIVE_PX}px) rotateX(${thetaDeg}deg) scaleY(${scaleY})`;
       }
     </script>
   </body>
