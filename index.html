@@ -50,7 +50,6 @@
 
       .cell {
         width: 100%;
-        aspect-ratio: 1;
         background: #ffffff;
         margin-bottom: 6.3vw;
         overflow: hidden;
@@ -144,6 +143,12 @@
         strips.push(strip);
       }
 
+      function setCellHeights(height) {
+        document.querySelectorAll('.cell').forEach(cell => {
+          cell.style.height = height + 'px';
+        });
+      }
+
       function buildCells() {
         strips.forEach((strip, i) => {
           const imgs = colImages[i];
@@ -166,9 +171,10 @@
       function initSizes(preserveScroll = false) {
         const gapPx = GAP_VW / 100 * window.innerWidth;
         const colWidth = columns[0].getBoundingClientRect().width;
-        const cellHeight = colWidth;
+        const cellHeight = colWidth * (window.innerHeight / window.innerWidth);
         const cellStep = cellHeight + gapPx;
 
+        setCellHeights(cellHeight);
         const newOneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
         const backdrop = document.getElementById('name-backdrop');
