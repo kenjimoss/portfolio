@@ -51,7 +51,6 @@
       .cell {
         width: 100%;
         background: #ffffff;
-        margin-bottom: 6.3vw;
         overflow: hidden;
       }
 
@@ -148,9 +147,10 @@
         strips.push(strip);
       }
 
-      function setCellHeights(height) {
+      function setCellHeights(height, gap) {
         document.querySelectorAll('.cell').forEach(cell => {
           cell.style.height = height + 'px';
+          cell.style.marginBottom = gap + 'px';
         });
       }
 
@@ -180,7 +180,7 @@
         const cellHeight = colWidth * (window.innerHeight / window.innerWidth);
         cellStep = cellHeight + gapPx;
 
-        setCellHeights(cellHeight);
+        setCellHeights(cellHeight, gapPx);
         const newOneSetHeights = colImages.map(imgs => imgs.length * cellStep);
 
         const backdrop = document.getElementById('name-backdrop');
@@ -243,12 +243,12 @@
           if (snapTimers[i]) clearTimeout(snapTimers[i]);
 
           offsets[i] += e.deltaY;
-          if (offsets[i] >= 2 * oneSetHeights[i]) offsets[i] -= oneSetHeights[i];
-          if (offsets[i] < oneSetHeights[i]) offsets[i] += oneSetHeights[i];
+          while (offsets[i] >= 2 * oneSetHeights[i]) offsets[i] -= oneSetHeights[i];
+          while (offsets[i] < oneSetHeights[i]) offsets[i] += oneSetHeights[i];
 
           strips[i].style.transform = `translateY(-${offsets[i]}px)`;
 
-          snapTimers[i] = setTimeout(() => startSnap(i), 150);
+          snapTimers[i] = setTimeout(() => startSnap(i), 250);
         }, { passive: false });
       });
 
