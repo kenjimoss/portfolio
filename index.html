@@ -275,8 +275,38 @@
       };
 
       function applyPerspective(data) {
-        // Placeholder — Step 3 will implement this
-        console.log('shape-update received:', data);
+        if (data.shape !== 'rectangle' && data.shape !== 'rounded') {
+          container.style.transform = '';
+          container.style.transformOrigin = '';
+          return;
+        }
+
+        const v = data.vertices;
+        // v[0]=topLeft, v[1]=topRight, v[2]=bottomRight, v[3]=bottomLeft (normalized 0-1)
+        const topWidth = v[1].x - v[0].x;
+        const bottomWidth = v[2].x - v[3].x;
+
+        if (bottomWidth <= 0) return;
+
+        const topScale = topWidth / bottomWidth;
+
+        if (Math.abs(topScale - 1) < 0.001) {
+          container.style.transform = '';
+          container.style.transformOrigin = '';
+          return;
+        }
+
+        // Perspective distance — larger = less extreme distortion
+        const d = 1000;
+        const h = window.innerHeight;
+
+        // Solve: topScale = d / (d + h * sin(theta))
+        // => sin(theta) = d * (1/topScale - 1) / h
+        const sinTheta = Math.max(-1, Math.min(1, d * (1 / topScale - 1) / h));
+        const thetaDeg = Math.asin(sinTheta) * 180 / Math.PI;
+
+        container.style.transformOrigin = '50% 100%';
+        container.style.transform = `perspective(${d}px) rotateX(${thetaDeg}deg)`;
       }
     </script>
   </body>
