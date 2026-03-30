@@ -269,15 +269,10 @@
 
       let shapeData = null;
 
-      try {
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.on('shape-update', (event, data) => {
-          shapeData = data;
-          applyPerspective(data);
-        });
-      } catch (e) {
-        // Not running inside Electron webview — ignore
-      }
+      window.__shapeUpdate = function(data) {
+        shapeData = data;
+        applyPerspective(data);
+      };
 
       function applyPerspective(data) {
         // Placeholder — Step 3 will implement this
