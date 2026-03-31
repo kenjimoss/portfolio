@@ -354,6 +354,29 @@
         applyPerspective(data);
       };
 
+      const PERSPECTIVE_MARGIN = 20; // px inset from each trapezoid edge
+
+      // Inset edge (a→b) inward by PERSPECTIVE_MARGIN px.
+      // Polygon order TL→TR→BR→BL is clockwise in screen coords,
+      // so the inward normal for edge (a→b) is (-dy, dx) / len.
+      function insetEdge(a, b) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const nx = -dy / len * PERSPECTIVE_MARGIN, ny = dx / len * PERSPECTIVE_MARGIN;
+        return { p1: { x: a.x + nx, y: a.y + ny },
+                 p2: { x: b.x + nx, y: b.y + ny } };
+      }
+
+      // Find intersection of two lines each defined by two points.
+      function lineIntersect(l1, l2) {
+        const x1 = l1.p1.x, y1 = l1.p1.y, x2 = l1.p2.x, y2 = l1.p2.y;
+        const x3 = l2.p1.x, y3 = l2.p1.y, x4 = l2.p2.x, y4 = l2.p2.y;
+        const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (Math.abs(d) < 1e-10) return { x: (x1 + x3) / 2, y: (y1 + y3) / 2 };
+        const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
+        return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
+      }
+
       function applyPerspective(data) {
         if (data.shape !== 'rectangle' && data.shape !== 'rounded') {
           container.style.transform = '';
@@ -361,35 +384,12 @@
           return;
         }
 
-        const MARGIN = 20; // px inset from each trapezoid edge
-
         const v = data.vertices; // normalized 0-1, order: TL, TR, BR, BL
         const vW = window.innerWidth;
         const vH = window.innerHeight;
 
         // Convert normalized vertices to viewport px
         const p = v.map(pt => ({ x: pt.x * vW, y: pt.y * vH }));
-
-        // Inset each edge inward by MARGIN px using the edge's inward normal.
-        // Polygon order TL→TR→BR→BL is clockwise in screen coords,
-        // so the inward normal for edge (a→b) is (-dy, dx) / len.
-        function insetEdge(a, b) {
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          const nx = -dy / len * MARGIN, ny = dx / len * MARGIN;
-          return { p1: { x: a.x + nx, y: a.y + ny },
-                   p2: { x: b.x + nx, y: b.y + ny } };
-        }
-
-        // Find intersection of two lines each defined by two points
-        function lineIntersect(l1, l2) {
-          const x1 = l1.p1.x, y1 = l1.p1.y, x2 = l1.p2.x, y2 = l1.p2.y;
-          const x3 = l2.p1.x, y3 = l2.p1.y, x4 = l2.p2.x, y4 = l2.p2.y;
-          const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-          if (Math.abs(d) < 1e-10) return { x: (x1 + x3) / 2, y: (y1 + y3) / 2 };
-          const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
-          return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
-        }
 
         // Inset all four edges
         const e = [
