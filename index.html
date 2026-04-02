@@ -4,14 +4,6 @@
     <meta charset="UTF-8">
     <title>kenji moss</title>
     <style>
-      @font-face {
-        font-family: 'Jura';
-        font-style: normal;
-        font-weight: 300 700;
-        font-display: block;
-        src: url('fonts/jura-latin.woff2') format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
       * {
         margin: 0;
         padding: 0;
@@ -19,85 +11,29 @@
       }
 
       body {
-        background-color: #ffffff;
+        background-color: #000;
         height: 100vh;
         overflow: hidden;
-        display: flex;
-        justify-content: center;
       }
 
-      .columns-container {
-        display: flex;
-        gap: 6.3vw;
-        width: 90.7vw;
-        height: 100vh;
-      }
-
-      .column {
-        flex: 1;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .column-strip {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        will-change: transform;
-      }
-
-      .cell {
-        width: 100%;
-        background: #ffffff;
-        overflow: hidden;
+      #grid-container {
+        display: grid;
+        grid-template-columns: repeat(5, 20vw);
+        grid-auto-rows: 20vw;
       }
 
       .cell img {
-        width: 100%;
-        height: 100%;
+        width: 20vw;
+        height: 20vw;
         object-fit: cover;
         display: block;
-      }
-
-      .name-backdrop,
-      .name-overlay {
-        display: none;
-      }
-
-      .name-backdrop {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #ffffff;
-        z-index: 9;
-      }
-
-      .name-overlay {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-family: "Jura", sans-serif;
-        font-weight: 300;
-        color: #4b4b4b;
-        z-index: 10;
-        pointer-events: none;
-        white-space: nowrap;
       }
     </style>
   </head>
   <body>
-    <div class="columns-container" id="columns-container"></div>
-    <div class="name-backdrop" id="name-backdrop"></div>
-    <div class="name-overlay">kenji moss</div>
+    <div id="grid-container"></div>
 
     <script>
-      const REPEATS = 3;
-      const GAP_VW = 6.3; // must match CSS gap and cell margin-bottom
-
       const images = [
         '01-soonju-chair-full-front-transparent.png',
         '01-soonju-chair-hand.jpg',
@@ -151,52 +87,20 @@
         '06-matt-process-drawing.png',
       ];
 
-      // Distribute images across 6 columns in round-robin order
-      const colImages = [[], [], [], [], [], []];
-      images.forEach((img, i) => colImages[i % 6].push(img));
+      const container = document.getElementById('grid-container');
 
-      const container = document.getElementById('columns-container');
-      const offsets = new Array(6).fill(0);
-      let oneSetHeights = new Array(6).fill(0);
+      images.forEach(src => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const img = document.createElement('img');
+        img.src = `images/${src}`;
+        img.alt = '';
+        cell.appendChild(img);
+        container.appendChild(cell);
+        img.addEventListener('dblclick', () => openImage(img));
+      });
 
-      const columns = [];
-      const strips = [];
-      for (let i = 0; i < 6; i++) {
-        const col = document.createElement('div');
-        col.className = 'column';
-        const strip = document.createElement('div');
-        strip.className = 'column-strip';
-        col.appendChild(strip);
-        container.appendChild(col);
-        columns.push(col);
-        strips.push(strip);
-      }
-
-      function setCellHeights(height, gap) {
-        document.querySelectorAll('.cell').forEach(cell => {
-          cell.style.height = height + 'px';
-          cell.style.marginBottom = gap + 'px';
-        });
-      }
-
-      function buildCells() {
-        strips.forEach((strip, i) => {
-          const imgs = colImages[i];
-          for (let r = 0; r < REPEATS; r++) {
-            imgs.forEach(src => {
-              const cell = document.createElement('div');
-              cell.className = 'cell';
-              const img = document.createElement('img');
-              img.src = `images/${src}`;
-              img.alt = '';
-              cell.appendChild(img);
-              strip.appendChild(cell);
-              img.addEventListener('dblclick', () => openImage(img));
-            });
-          }
-        });
-      }
-
+      // Lightbox
       let activeOverlay = null;
       let overlayOriginRect = null;
 
@@ -251,114 +155,13 @@
 
       document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImage(); });
 
-      let prevCellStep = 0;
-      let cellStep = 0;
-
-      function initSizes(preserveScroll = false) {
-        const gapPx = GAP_VW / 100 * window.innerWidth;
-        const colWidth = columns[0].getBoundingClientRect().width;
-        const cellHeight = colWidth * (window.innerHeight / window.innerWidth);
-        cellStep = cellHeight + gapPx;
-
-        setCellHeights(cellHeight, gapPx);
-        const newOneSetHeights = colImages.map(imgs => imgs.length * cellStep);
-
-        const backdrop = document.getElementById('name-backdrop');
-        backdrop.style.width  = (2.5 * cellHeight + gapPx) + 'px';
-        backdrop.style.height = (1.5 * cellHeight) + 'px';
-
-        document.querySelector('.name-overlay').style.fontSize = (cellHeight * 0.46) + 'px';
-
-        const viewH = window.innerHeight;
-        const topPad = Math.max(0, (viewH - (3 * cellHeight + 2 * gapPx)) / 2);
-
-        strips.forEach((strip, i) => {
-          if (preserveScroll && prevCellStep > 0 && oneSetHeights[i] > 0) {
-            const relative = offsets[i] - oneSetHeights[i];
-            offsets[i] = newOneSetHeights[i] + relative * (cellStep / prevCellStep);
-            while (offsets[i] >= 2 * newOneSetHeights[i]) offsets[i] -= newOneSetHeights[i];
-            while (offsets[i] <      newOneSetHeights[i]) offsets[i] += newOneSetHeights[i];
-          } else {
-            offsets[i] = newOneSetHeights[i];
-          }
-          strip.style.paddingTop = topPad + 'px';
-          strip.style.transform = `translateY(-${offsets[i]}px)`;
-        });
-
-        oneSetHeights = newOneSetHeights;
-        prevCellStep = cellStep;
-      }
-
-      const snapTimers = new Array(6).fill(null);
-      const snapRafs = new Array(6).fill(null);
-
-      function startSnap(i) {
-        const relative = offsets[i] - oneSetHeights[i];
-        const target = oneSetHeights[i] + Math.round(relative / cellStep) * cellStep;
-
-        function animate() {
-          const diff = target - offsets[i];
-          if (Math.abs(diff) < 0.5) {
-            offsets[i] = target;
-            while (offsets[i] >= 2 * oneSetHeights[i]) offsets[i] -= oneSetHeights[i];
-            while (offsets[i] < oneSetHeights[i]) offsets[i] += oneSetHeights[i];
-            strips[i].style.transform = `translateY(-${offsets[i]}px)`;
-            snapRafs[i] = null;
-            return;
-          }
-          offsets[i] += diff * 0.12;
-          strips[i].style.transform = `translateY(-${offsets[i]}px)`;
-          snapRafs[i] = requestAnimationFrame(animate);
-        }
-
-        if (snapRafs[i]) cancelAnimationFrame(snapRafs[i]);
-        snapRafs[i] = requestAnimationFrame(animate);
-      }
-
-      columns.forEach((col, i) => {
-        col.addEventListener('wheel', (e) => {
-          e.preventDefault();
-
-          if (snapRafs[i]) { cancelAnimationFrame(snapRafs[i]); snapRafs[i] = null; }
-          if (snapTimers[i]) clearTimeout(snapTimers[i]);
-
-          offsets[i] += e.deltaY;
-          while (offsets[i] >= 2 * oneSetHeights[i]) offsets[i] -= oneSetHeights[i];
-          while (offsets[i] < oneSetHeights[i]) offsets[i] += oneSetHeights[i];
-
-          strips[i].style.transform = `translateY(-${offsets[i]}px)`;
-
-          snapTimers[i] = setTimeout(() => startSnap(i), 250);
-        }, { passive: false });
-      });
-
-      let resizePending = false;
-      function onResize() {
-        if (!resizePending) {
-          resizePending = true;
-          requestAnimationFrame(() => {
-            initSizes(true);
-            resizePending = false;
-          });
-        }
-      }
-
-      buildCells();
-      initSizes();
-      window.addEventListener('resize', onResize);
-
-      let shapeData = null;
-
+      // Perspective warp
       window.__shapeUpdate = function(data) {
-        shapeData = data;
         applyPerspective(data);
       };
 
-      const PERSPECTIVE_MARGIN = 20; // px inset from each trapezoid edge
+      const PERSPECTIVE_MARGIN = 20;
 
-      // Inset edge (a→b) inward by PERSPECTIVE_MARGIN px.
-      // Polygon order TL→TR→BR→BL is clockwise in screen coords,
-      // so the inward normal for edge (a→b) is (-dy, dx) / len.
       function insetEdge(a, b) {
         const dx = b.x - a.x, dy = b.y - a.y;
         const len = Math.sqrt(dx * dx + dy * dy);
@@ -367,7 +170,6 @@
                  p2: { x: b.x + nx, y: b.y + ny } };
       }
 
-      // Find intersection of two lines each defined by two points.
       function lineIntersect(l1, l2) {
         const x1 = l1.p1.x, y1 = l1.p1.y, x2 = l1.p2.x, y2 = l1.p2.y;
         const x3 = l2.p1.x, y3 = l2.p1.y, x4 = l2.p2.x, y4 = l2.p2.y;
@@ -384,39 +186,33 @@
           return;
         }
 
-        const v = data.vertices; // normalized 0-1, order: TL, TR, BR, BL
+        const v = data.vertices;
         const vW = window.innerWidth;
         const vH = window.innerHeight;
 
-        // Convert normalized vertices to viewport px
         const p = v.map(pt => ({ x: pt.x * vW, y: pt.y * vH }));
 
-        // Inset all four edges
         const e = [
-          insetEdge(p[0], p[1]), // top
-          insetEdge(p[1], p[2]), // right
-          insetEdge(p[2], p[3]), // bottom
-          insetEdge(p[3], p[0]), // left
+          insetEdge(p[0], p[1]),
+          insetEdge(p[1], p[2]),
+          insetEdge(p[2], p[3]),
+          insetEdge(p[3], p[0]),
         ];
 
-        // Inset corners = intersections of adjacent inset edges
         const dst = [
-          lineIntersect(e[3], e[0]), // TL: left ∩ top
-          lineIntersect(e[0], e[1]), // TR: top ∩ right
-          lineIntersect(e[1], e[2]), // BR: right ∩ bottom
-          lineIntersect(e[2], e[3]), // BL: bottom ∩ left
+          lineIntersect(e[3], e[0]),
+          lineIntersect(e[0], e[1]),
+          lineIntersect(e[1], e[2]),
+          lineIntersect(e[2], e[3]),
         ];
 
-        // Container's natural position in viewport (without transform)
         const cW = container.offsetWidth;
         const cH = container.offsetHeight;
         const L = (vW - cW) / 2;
         const T = 0;
 
-        // Convert destination corners to element-local coordinates
         const dstL = dst.map(pt => ({ x: pt.x - L, y: pt.y - T }));
 
-        // Compute homography: source rectangle [0,cW]×[0,cH] → dstL (TL,TR,BR,BL)
         const H = computeHomography(
           [0,  cW, cW, 0 ],
           [0,  0,  cH, cH],
@@ -424,12 +220,6 @@
           dstL.map(pt => pt.y)
         );
 
-        // CSS matrix3d expects column-major 4x4.
-        // 2D homography [[h00,h01,h02],[h10,h11,h12],[h20,h21,h22]] embeds as:
-        // | h00  h01  0  h02 |
-        // | h10  h11  0  h12 |
-        // |  0    0   1   0  |
-        // | h20  h21  0  h22 |
         container.style.transformOrigin = '0 0';
         container.style.transform = `matrix3d(
           ${H[0][0]},${H[1][0]},0,${H[2][0]},
@@ -438,8 +228,6 @@
           ${H[0][2]},${H[1][2]},0,${H[2][2]})`;
       }
 
-      // Compute 3×3 homography matrix mapping 4 source points to 4 destination points.
-      // Returns H as [[row0],[row1],[row2]] with H[2][2] = 1.
       function computeHomography(srcX, srcY, dstX, dstY) {
         const A = [], b = [];
         for (let i = 0; i < 4; i++) {
@@ -453,7 +241,6 @@
         return [[h[0], h[1], h[2]], [h[3], h[4], h[5]], [h[6], h[7], 1]];
       }
 
-      // Solve 8×8 linear system Ax = b via Gaussian elimination with partial pivoting.
       function gaussSolve(A, b) {
         const n = 8;
         const M = A.map((row, i) => [...row, b[i]]);
