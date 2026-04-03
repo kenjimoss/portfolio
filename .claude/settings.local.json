@@ -4,7 +4,9 @@
       "WebFetch(domain:fonts.googleapis.com)",
       "Bash(curl -s \"https://fonts.googleapis.com/css2?family=Jura:wght@300..700&display=swap\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\")",
       "Bash(mkdir -p \"C:/users/owner/portfolio.website/portfolio/fonts\")",
-      "Bash(curl -s \"https://fonts.gstatic.com/s/jura/v34/z7NbdRfiaC4VXcRJUQ.woff2\" -o \"C:/users/owner/portfolio.website/portfolio/fonts/jura-latin.woff2\")"
+      "Bash(curl -s \"https://fonts.gstatic.com/s/jura/v34/z7NbdRfiaC4VXcRJUQ.woff2\" -o \"C:/users/owner/portfolio.website/portfolio/fonts/jura-latin.woff2\")",
+      "Bash(node:*)",
+      "Bash(grep -E \"\\\\.\\(ts|js|tsx|jsx|json\\)$\")"
     ],
     "additionalDirectories": [
       "C:\\users\\owner\\browser.tabs"
