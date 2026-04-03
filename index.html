@@ -137,26 +137,25 @@
         img.addEventListener('dblclick', () => openImage(img));
       }
 
-      // Returns true if point (px, py) is inside the convex polygon.
-      // Works for both CW and CCW vertex order by checking all cross
-      // products share the same sign.
+      // Ray-casting point-in-polygon. Works for any simple polygon (convex or non-convex).
       function pointInPolygon(px, py, poly) {
         const n = poly.length;
-        let sign = 0;
-        for (let i = 0; i < n; i++) {
-          const a = poly[i], b = poly[(i + 1) % n];
-          const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
-          if (Math.abs(cross) < 1e-9) continue; // on edge
-          const s = cross > 0 ? 1 : -1;
-          if (sign === 0) sign = s;
-          else if (s !== sign) return false;
+        let inside = false;
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+          const xi = poly[i].x, yi = poly[i].y;
+          const xj = poly[j].x, yj = poly[j].y;
+          if (((yi > py) !== (yj > py)) &&
+              (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+          }
         }
-        return true;
+        return inside;
       }
 
-      // Last vertices received from __shapeUpdate, in normalized 0-1 coords.
+      // Last shape data received from __shapeUpdate, in normalized 0-1 coords.
       // null means no shape data yet — fall back to viewport rectangle.
       let lastVertices = null;
+      let lastHoles    = null; // array of hole polygons, each [{x,y},...], or null
 
       function getPolygon() {
         const vW = window.innerWidth, vH = window.innerHeight;
@@ -164,6 +163,12 @@
           return [{ x: 0, y: 0 }, { x: vW, y: 0 }, { x: vW, y: vH }, { x: 0, y: vH }];
         }
         return lastVertices.map(v => ({ x: v.x * vW, y: v.y * vH }));
+      }
+
+      function getHoles() {
+        if (!lastHoles) return null;
+        const vW = window.innerWidth, vH = window.innerHeight;
+        return lastHoles.map(hole => hole.map(v => ({ x: v.x * vW, y: v.y * vH })));
       }
 
       let pendingUpdate = false;
@@ -180,6 +185,7 @@
 
       function updateVisibility() {
         const poly     = getPolygon();
+        const holes    = getHoles(); // null or array of pixel-coord hole polygons
         const vW       = window.innerWidth, vH = window.innerHeight;
         const gridLeft = vW / 2 - GRID_WIDTH  / 2;
         const gridTop  = vH / 2 - GRID_HEIGHT / 2;
@@ -218,13 +224,26 @@
             // Reject cell if outside polygon AABB
             if (x1 <= pMinX || x0 >= pMaxX) {
               inside = 0;
+            } else if (
+              pointInPolygon(x0, y0, poly) &&
+              pointInPolygon(x1, y0, poly) &&
+              pointInPolygon(x1, y1, poly) &&
+              pointInPolygon(x0, y1, poly)
+            ) {
+              // All 4 corners inside outer polygon — now check holes.
+              // Hide the cell if any corner falls inside a hole.
+              if (holes && holes.some(hole =>
+                pointInPolygon(x0, y0, hole) ||
+                pointInPolygon(x1, y0, hole) ||
+                pointInPolygon(x1, y1, hole) ||
+                pointInPolygon(x0, y1, hole)
+              )) {
+                inside = 0;
+              } else {
+                inside = 1;
+              }
             } else {
-              inside = (
-                pointInPolygon(x0, y0, poly) &&
-                pointInPolygon(x1, y0, poly) &&
-                pointInPolygon(x1, y1, poly) &&
-                pointInPolygon(x0, y1, poly)
-              ) ? 1 : 0;
+              inside = 0;
             }
 
             const idx = row * GRID_COLS + col;
@@ -239,6 +258,7 @@
 
       window.__shapeUpdate = function(data) {
         lastVertices = (data.vertices && data.vertices.length > 0) ? data.vertices : null;
+        lastHoles    = (data.holes    && data.holes.length    > 0) ? data.holes    : null;
         scheduleUpdate();
       };
 
