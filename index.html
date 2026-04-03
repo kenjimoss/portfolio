@@ -11,7 +11,7 @@
       }
 
       body {
-        background-color: #000;
+        background-color: #4d4d4d;
         overflow: hidden;
       }
 
@@ -30,9 +30,9 @@
         left: 50%;
         transform: translate(-50%, -50%);
         display: grid;
-        grid-template-columns: repeat(160, 50px);
+        grid-template-columns: repeat(80, 50px);
         grid-auto-rows: 50px;
-        width: 8000px;
+        width: 4000px;
       }
 
       .cell img {
@@ -110,8 +110,8 @@
         '07-gesa-minimal-section.jpg',
       ];
 
-      const GRID_COLS = 160;
-      const GRID_ROWS = 100;
+      const GRID_COLS = 80;
+      const GRID_ROWS = 60;
 
       const gridContainer = document.getElementById('grid-container');
 
@@ -121,6 +121,7 @@
         const img = document.createElement('img');
         img.src = `images/${images[i % images.length]}`;
         img.alt = '';
+        img.loading = 'lazy';
         cell.appendChild(img);
         gridContainer.appendChild(cell);
         img.addEventListener('dblclick', () => openImage(img));
