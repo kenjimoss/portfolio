@@ -166,25 +166,66 @@
         return lastVertices.map(v => ({ x: v.x * vW, y: v.y * vH }));
       }
 
+      let pendingUpdate = false;
+
+      function scheduleUpdate() {
+        if (!pendingUpdate) {
+          pendingUpdate = true;
+          requestAnimationFrame(() => {
+            pendingUpdate = false;
+            updateVisibility();
+          });
+        }
+      }
+
       function updateVisibility() {
         const poly     = getPolygon();
         const vW       = window.innerWidth, vH = window.innerHeight;
         const gridLeft = vW / 2 - GRID_WIDTH  / 2;
         const gridTop  = vH / 2 - GRID_HEIGHT / 2;
 
+        // Polygon AABB for fast cell rejection
+        let pMinX = Infinity, pMaxX = -Infinity;
+        let pMinY = Infinity, pMaxY = -Infinity;
+        for (const v of poly) {
+          if (v.x < pMinX) pMinX = v.x;
+          if (v.x > pMaxX) pMaxX = v.x;
+          if (v.y < pMinY) pMinY = v.y;
+          if (v.y > pMaxY) pMaxY = v.y;
+        }
+
         for (let row = 0; row < GRID_ROWS; row++) {
+          const y0 = gridTop  + row * CELL_SIZE;
+          const y1 = y0 + CELL_SIZE;
+
+          // Reject entire row if outside polygon AABB
+          if (y1 <= pMinY || y0 >= pMaxY) {
+            for (let col = 0; col < GRID_COLS; col++) {
+              const idx = row * GRID_COLS + col;
+              if (cellState[idx] !== 0) {
+                cellState[idx] = 0;
+                cellElements[idx].classList.add('hidden');
+              }
+            }
+            continue;
+          }
+
           for (let col = 0; col < GRID_COLS; col++) {
             const x0 = gridLeft + col * CELL_SIZE;
-            const y0 = gridTop  + row * CELL_SIZE;
             const x1 = x0 + CELL_SIZE;
-            const y1 = y0 + CELL_SIZE;
 
-            const inside = (
-              pointInPolygon(x0, y0, poly) &&
-              pointInPolygon(x1, y0, poly) &&
-              pointInPolygon(x1, y1, poly) &&
-              pointInPolygon(x0, y1, poly)
-            ) ? 1 : 0;
+            let inside;
+            // Reject cell if outside polygon AABB
+            if (x1 <= pMinX || x0 >= pMaxX) {
+              inside = 0;
+            } else {
+              inside = (
+                pointInPolygon(x0, y0, poly) &&
+                pointInPolygon(x1, y0, poly) &&
+                pointInPolygon(x1, y1, poly) &&
+                pointInPolygon(x0, y1, poly)
+              ) ? 1 : 0;
+            }
 
             const idx = row * GRID_COLS + col;
             if (inside !== cellState[idx]) {
@@ -198,13 +239,13 @@
 
       window.__shapeUpdate = function(data) {
         lastVertices = (data.vertices && data.vertices.length > 0) ? data.vertices : null;
-        updateVisibility();
+        scheduleUpdate();
       };
 
-      window.addEventListener('resize', updateVisibility);
+      window.addEventListener('resize', scheduleUpdate);
 
       // Run once on load using the viewport rectangle
-      updateVisibility();
+      scheduleUpdate();
 
       // Lightbox
       let activeOverlay    = null;
