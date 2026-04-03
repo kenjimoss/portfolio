@@ -41,6 +41,10 @@
         object-fit: cover;
         display: block;
       }
+
+      .cell.hidden {
+        visibility: hidden;
+      }
     </style>
   </head>
   <body>
@@ -110,25 +114,100 @@
         '07-gesa-minimal-section.jpg',
       ];
 
-      const GRID_COLS = 80;
-      const GRID_ROWS = 60;
+      const CELL_SIZE  = 50;
+      const GRID_COLS  = 80;
+      const GRID_ROWS  = 60;
+      const GRID_WIDTH  = GRID_COLS * CELL_SIZE; // 4000px
+      const GRID_HEIGHT = GRID_ROWS * CELL_SIZE; // 3000px
 
       const gridContainer = document.getElementById('grid-container');
+      const cellElements  = []; // indexed [row * GRID_COLS + col]
+      const cellState     = new Uint8Array(GRID_COLS * GRID_ROWS); // 0=hidden 1=visible
 
       for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
         const cell = document.createElement('div');
-        cell.className = 'cell';
+        cell.className = 'cell hidden';
         const img = document.createElement('img');
         img.src = `images/${images[i % images.length]}`;
         img.alt = '';
         img.loading = 'lazy';
         cell.appendChild(img);
         gridContainer.appendChild(cell);
+        cellElements.push(cell);
         img.addEventListener('dblclick', () => openImage(img));
       }
 
+      // Returns true if point (px, py) is inside the convex polygon.
+      // Works for both CW and CCW vertex order by checking all cross
+      // products share the same sign.
+      function pointInPolygon(px, py, poly) {
+        const n = poly.length;
+        let sign = 0;
+        for (let i = 0; i < n; i++) {
+          const a = poly[i], b = poly[(i + 1) % n];
+          const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+          if (Math.abs(cross) < 1e-9) continue; // on edge
+          const s = cross > 0 ? 1 : -1;
+          if (sign === 0) sign = s;
+          else if (s !== sign) return false;
+        }
+        return true;
+      }
+
+      // Last vertices received from __shapeUpdate, in normalized 0-1 coords.
+      // null means no shape data yet — fall back to viewport rectangle.
+      let lastVertices = null;
+
+      function getPolygon() {
+        const vW = window.innerWidth, vH = window.innerHeight;
+        if (!lastVertices) {
+          return [{ x: 0, y: 0 }, { x: vW, y: 0 }, { x: vW, y: vH }, { x: 0, y: vH }];
+        }
+        return lastVertices.map(v => ({ x: v.x * vW, y: v.y * vH }));
+      }
+
+      function updateVisibility() {
+        const poly     = getPolygon();
+        const vW       = window.innerWidth, vH = window.innerHeight;
+        const gridLeft = vW / 2 - GRID_WIDTH  / 2;
+        const gridTop  = vH / 2 - GRID_HEIGHT / 2;
+
+        for (let row = 0; row < GRID_ROWS; row++) {
+          for (let col = 0; col < GRID_COLS; col++) {
+            const x0 = gridLeft + col * CELL_SIZE;
+            const y0 = gridTop  + row * CELL_SIZE;
+            const x1 = x0 + CELL_SIZE;
+            const y1 = y0 + CELL_SIZE;
+
+            const inside = (
+              pointInPolygon(x0, y0, poly) &&
+              pointInPolygon(x1, y0, poly) &&
+              pointInPolygon(x1, y1, poly) &&
+              pointInPolygon(x0, y1, poly)
+            ) ? 1 : 0;
+
+            const idx = row * GRID_COLS + col;
+            if (inside !== cellState[idx]) {
+              cellState[idx] = inside;
+              if (inside) cellElements[idx].classList.remove('hidden');
+              else        cellElements[idx].classList.add('hidden');
+            }
+          }
+        }
+      }
+
+      window.__shapeUpdate = function(data) {
+        lastVertices = (data.vertices && data.vertices.length > 0) ? data.vertices : null;
+        updateVisibility();
+      };
+
+      window.addEventListener('resize', updateVisibility);
+
+      // Run once on load using the viewport rectangle
+      updateVisibility();
+
       // Lightbox
-      let activeOverlay = null;
+      let activeOverlay    = null;
       let overlayOriginRect = null;
 
       function openImage(imgEl) {
