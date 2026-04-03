@@ -12,26 +12,41 @@
 
       body {
         background-color: #000;
+        overflow: hidden;
+      }
+
+      #warp-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
         height: 100vh;
         overflow: hidden;
       }
 
       #grid-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         display: grid;
-        grid-template-columns: repeat(auto-fill, 100px);
-        grid-auto-rows: 100px;
+        grid-template-columns: repeat(160, 50px);
+        grid-auto-rows: 50px;
+        width: 8000px;
       }
 
       .cell img {
-        width: 100px;
-        height: 100px;
+        width: 50px;
+        height: 50px;
         object-fit: cover;
         display: block;
       }
     </style>
   </head>
   <body>
-    <div id="grid-container"></div>
+    <div id="warp-container">
+      <div id="grid-container"></div>
+    </div>
 
     <script>
       const images = [
@@ -95,18 +110,21 @@
         '07-gesa-minimal-section.jpg',
       ];
 
-      const container = document.getElementById('grid-container');
+      const GRID_COLS = 160;
+      const GRID_ROWS = 100;
 
-      images.forEach(src => {
+      const gridContainer = document.getElementById('grid-container');
+
+      for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
         const img = document.createElement('img');
-        img.src = `images/${src}`;
+        img.src = `images/${images[i % images.length]}`;
         img.alt = '';
         cell.appendChild(img);
-        container.appendChild(cell);
+        gridContainer.appendChild(cell);
         img.addEventListener('dblclick', () => openImage(img));
-      });
+      }
 
       // Lightbox
       let activeOverlay = null;
@@ -163,7 +181,9 @@
 
       document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImage(); });
 
-      // Perspective warp
+      // Perspective warp — applied to warp-container, not the grid itself
+      const warpContainer = document.getElementById('warp-container');
+
       window.__shapeUpdate = function(data) {
         applyPerspective(data);
       };
@@ -194,14 +214,14 @@
 
       function applyPerspective(data) {
         if (data.shape !== 'rectangle' && data.shape !== 'rounded') {
-          container.style.transform = '';
-          container.style.transformOrigin = '';
+          warpContainer.style.transform = '';
+          warpContainer.style.transformOrigin = '';
           return;
         }
 
         if (isUndistorted(data.vertices)) {
-          container.style.transform = '';
-          container.style.transformOrigin = '';
+          warpContainer.style.transform = '';
+          warpContainer.style.transformOrigin = '';
           return;
         }
 
@@ -225,22 +245,19 @@
           lineIntersect(e[2], e[3]),
         ];
 
-        const cW = container.offsetWidth;
-        const cH = container.offsetHeight;
-        const L = (vW - cW) / 2;
-        const T = 0;
-
-        const dstL = dst.map(pt => ({ x: pt.x - L, y: pt.y - T }));
+        // warp-container is always at (0,0) and fills the viewport
+        const cW = vW;
+        const cH = vH;
 
         const H = computeHomography(
           [0,  cW, cW, 0 ],
           [0,  0,  cH, cH],
-          dstL.map(pt => pt.x),
-          dstL.map(pt => pt.y)
+          dst.map(pt => pt.x),
+          dst.map(pt => pt.y)
         );
 
-        container.style.transformOrigin = '0 0';
-        container.style.transform = `matrix3d(
+        warpContainer.style.transformOrigin = '0 0';
+        warpContainer.style.transform = `matrix3d(
           ${H[0][0]},${H[1][0]},0,${H[2][0]},
           ${H[0][1]},${H[1][1]},0,${H[2][1]},
           0,0,1,0,
