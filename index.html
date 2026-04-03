@@ -11,7 +11,7 @@
       }
 
       body {
-        background-color: #4d4d4d;
+        background-color: #333;
         overflow: hidden;
       }
 
@@ -33,6 +33,7 @@
         grid-template-columns: repeat(80, 50px);
         grid-auto-rows: 50px;
         width: 4000px;
+        /* top/left/transform overridden by JS when screen coords are available */
       }
 
       .cell img {
@@ -185,7 +186,27 @@
       // Perspective warp — applied to warp-container, not the grid itself
       const warpContainer = document.getElementById('warp-container');
 
+      const GRID_WIDTH  = 80 * 50;  // 4000px
+      const GRID_HEIGHT = 60 * 50;  // 3000px
+      let worldOriginX = null;
+      let worldOriginY = null;
+
+      function positionGrid(screenX, screenY, winWidth, winHeight) {
+        if (worldOriginX === null) {
+          worldOriginX = screenX + winWidth  / 2;
+          worldOriginY = screenY + winHeight / 2;
+        }
+        const gridLeft = worldOriginX - screenX - GRID_WIDTH  / 2;
+        const gridTop  = worldOriginY - screenY - GRID_HEIGHT / 2;
+        gridContainer.style.transform = 'none';
+        gridContainer.style.left = gridLeft + 'px';
+        gridContainer.style.top  = gridTop  + 'px';
+      }
+
       window.__shapeUpdate = function(data) {
+        if (data.screenX !== undefined && data.screenY !== undefined) {
+          positionGrid(data.screenX, data.screenY, data.width, data.height);
+        }
         applyPerspective(data);
       };
 
