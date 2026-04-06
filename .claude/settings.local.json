@@ -6,7 +6,8 @@
       "Bash(mkdir -p \"C:/users/owner/portfolio.website/portfolio/fonts\")",
       "Bash(curl -s \"https://fonts.gstatic.com/s/jura/v34/z7NbdRfiaC4VXcRJUQ.woff2\" -o \"C:/users/owner/portfolio.website/portfolio/fonts/jura-latin.woff2\")",
       "Bash(node:*)",
-      "Bash(grep -E \"\\\\.\\(ts|js|tsx|jsx|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|js|tsx|jsx|json\\)$\")",
+      "Bash(ls:*)"
     ],
     "additionalDirectories": [
       "C:\\users\\owner\\browser.tabs"
