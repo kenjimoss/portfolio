@@ -30,14 +30,13 @@
         left: 50%;
         transform: translate(-50%, -50%);
         display: grid;
-        grid-template-columns: repeat(80, 50px);
-        grid-auto-rows: 50px;
-        width: 4000px;
+        grid-template-columns: repeat(var(--grid-cols), var(--cell-size));
+        grid-auto-rows: var(--cell-size);
       }
 
       .cell img {
-        width: 50px;
-        height: 50px;
+        width: var(--cell-size);
+        height: var(--cell-size);
         object-fit: cover;
         display: block;
       }
@@ -57,17 +56,30 @@
         '00_charlatan_standard.jpg',
       ];
 
-      const CELL_SIZE  = 50;
-      const GRID_COLS  = 80;
-      const GRID_ROWS  = 60;
-      const GRID_WIDTH  = GRID_COLS * CELL_SIZE; // 4000px
-      const GRID_HEIGHT = GRID_ROWS * CELL_SIZE; // 3000px
+      // Stepped cell sizes — pinch in / scroll down = smaller, pinch out / scroll up = larger
+      const CELL_STEPS = [15, 30, 60];
+      let stepIndex = 1;                     // start at 30px (middle)
+      let cellSize  = CELL_STEPS[stepIndex];
+
+      // Pre-create enough cells to cover the viewport at the smallest step (15px).
+      // At larger steps the same cell count covers more area — always over-covered.
+      const GRID_COLS  = Math.ceil(screen.availWidth  / CELL_STEPS[0]) + 4;
+      const GRID_ROWS  = Math.ceil(screen.availHeight / CELL_STEPS[0]) + 4;
+      const TOTAL_CELLS = GRID_COLS * GRID_ROWS;
+
+      // Derived dimensions — updated by applyStep()
+      let GRID_WIDTH  = GRID_COLS * cellSize;
+      let GRID_HEIGHT = GRID_ROWS * cellSize;
 
       const gridContainer = document.getElementById('grid-container');
       const cellElements  = []; // indexed [row * GRID_COLS + col]
-      const cellState     = new Uint8Array(GRID_COLS * GRID_ROWS); // 0=hidden 1=visible
+      const cellState     = new Uint8Array(TOTAL_CELLS); // 0=hidden 1=visible
 
-      for (let i = 0; i < GRID_COLS * GRID_ROWS; i++) {
+      // Set initial CSS custom properties
+      gridContainer.style.setProperty('--grid-cols', GRID_COLS);
+      gridContainer.style.setProperty('--cell-size', cellSize + 'px');
+
+      for (let i = 0; i < TOTAL_CELLS; i++) {
         const cell = document.createElement('div');
         cell.className = 'cell hidden';
         const img = document.createElement('img');
@@ -78,6 +90,17 @@
         gridContainer.appendChild(cell);
         cellElements.push(cell);
         img.addEventListener('dblclick', () => openImage(img));
+      }
+
+      function applyStep(newIndex) {
+        newIndex = Math.max(0, Math.min(CELL_STEPS.length - 1, newIndex));
+        if (newIndex === stepIndex) return;
+        stepIndex = newIndex;
+        cellSize  = CELL_STEPS[stepIndex];
+        GRID_WIDTH  = GRID_COLS * cellSize;
+        GRID_HEIGHT = GRID_ROWS * cellSize;
+        gridContainer.style.setProperty('--cell-size', cellSize + 'px');
+        scheduleUpdate();
       }
 
       // Ray-casting point-in-polygon. Works for any simple polygon (convex or non-convex).
@@ -144,8 +167,8 @@
         }
 
         for (let row = 0; row < GRID_ROWS; row++) {
-          const y0 = gridTop  + row * CELL_SIZE;
-          const y1 = y0 + CELL_SIZE;
+          const y0 = gridTop  + row * cellSize;
+          const y1 = y0 + cellSize;
 
           // Reject entire row if outside polygon AABB
           if (y1 <= pMinY || y0 >= pMaxY) {
@@ -160,8 +183,8 @@
           }
 
           for (let col = 0; col < GRID_COLS; col++) {
-            const x0 = gridLeft + col * CELL_SIZE;
-            const x1 = x0 + CELL_SIZE;
+            const x0 = gridLeft + col * cellSize;
+            const x1 = x0 + cellSize;
 
             let inside;
             // Reject cell if outside polygon AABB
@@ -264,6 +287,55 @@
       }
 
       document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImage(); });
+
+      // Mouse wheel — scroll down = smaller cells, scroll up = larger cells
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY > 0) applyStep(stepIndex - 1);
+        else              applyStep(stepIndex + 1);
+      }, { passive: false });
+
+      // Pinch — two-finger pinch in = smaller cells, pinch out = larger cells
+      {
+        const pinchPointers = new Map(); // pointerId → { x, y }
+        let pinchStartDist = null;
+
+        function pinchDist() {
+          const [a, b] = [...pinchPointers.values()];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        document.addEventListener('pointerdown', (e) => {
+          if (e.pointerType !== 'touch') return;
+          pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pinchPointers.size === 2) pinchStartDist = pinchDist();
+        });
+
+        document.addEventListener('pointermove', (e) => {
+          if (!pinchPointers.has(e.pointerId)) return;
+          pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pinchPointers.size < 2 || pinchStartDist === null) return;
+
+          const dist  = pinchDist();
+          const ratio = dist / pinchStartDist;
+
+          if (ratio <= 0.7) {
+            applyStep(stepIndex - 1);
+            pinchStartDist = dist; // reset so next step requires another full threshold
+          } else if (ratio >= 1.4) {
+            applyStep(stepIndex + 1);
+            pinchStartDist = dist;
+          }
+        });
+
+        const endPinch = (e) => {
+          pinchPointers.delete(e.pointerId);
+          if (pinchPointers.size < 2) pinchStartDist = null;
+        };
+        document.addEventListener('pointerup',     endPinch);
+        document.addEventListener('pointercancel', endPinch);
+      }
     </script>
   </body>
 </html>
