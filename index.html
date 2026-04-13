@@ -34,6 +34,10 @@
         grid-auto-rows: var(--cell-size);
       }
 
+      .cell {
+        overflow: hidden;
+      }
+
       .cell img {
         width: var(--cell-size);
         height: var(--cell-size);
@@ -83,9 +87,14 @@
         const cell = document.createElement('div');
         cell.className = 'cell hidden';
         const img = document.createElement('img');
-        img.src = `images/${images[i % images.length]}`;
+        img.src = `images/${images[Math.floor(Math.random() * images.length)]}`;
         img.alt = '';
         img.loading = 'lazy';
+        const zoom = 1 + Math.random() * 1.5;
+        const ox   = Math.random() * 100;
+        const oy   = Math.random() * 100;
+        img.style.transform       = `scale(${zoom})`;
+        img.style.transformOrigin = `${ox}% ${oy}%`;
         cell.appendChild(img);
         gridContainer.appendChild(cell);
         cellElements.push(cell);
