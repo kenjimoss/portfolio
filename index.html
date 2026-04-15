@@ -11,7 +11,7 @@
       }
 
       body {
-        background-color: #333;
+        background-color: #000;
         overflow: hidden;
       }
 
@@ -61,8 +61,8 @@
       ];
 
       // Stepped cell sizes — pinch in / scroll down = smaller, pinch out / scroll up = larger
-      const CELL_STEPS = [15, 30, 60];
-      let stepIndex = 1;                     // start at 30px (middle)
+      const CELL_STEPS = [10, 25, 40, 55, 70];
+      let stepIndex = 2;                     // start at 40px (middle)
       let cellSize  = CELL_STEPS[stepIndex];
 
       // Pre-create enough cells to cover the viewport at the smallest step (15px).
@@ -91,9 +91,10 @@
         img.alt = '';
         img.loading = 'lazy';
         const zoom = 1 + Math.random() * 1.5;
+        const rot  = Math.floor(Math.random() * 4) * 90;
         const ox   = Math.random() * 100;
         const oy   = Math.random() * 100;
-        img.style.transform       = `scale(${zoom})`;
+        img.style.transform       = `scale(${zoom}) rotate(${rot}deg)`;
         img.style.transformOrigin = `${ox}% ${oy}%`;
         cell.appendChild(img);
         gridContainer.appendChild(cell);
