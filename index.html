@@ -95,7 +95,8 @@
         const ox   = Math.random() * 100;
         const oy   = Math.random() * 100;
         img.style.transform       = `scale(${zoom}) rotate(${rot}deg)`;
-        img.style.transformOrigin = `${ox}% ${oy}%`;
+        img.style.transformOrigin = '50% 50%';
+        img.style.objectPosition  = `${ox}% ${oy}%`;
         cell.appendChild(img);
         gridContainer.appendChild(cell);
         cellElements.push(cell);
