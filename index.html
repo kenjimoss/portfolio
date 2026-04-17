@@ -56,8 +56,58 @@
     </div>
 
     <script>
+      const COLLECTION = 'collection_02_plan and section drawings';
       const images = [
-        '00_charlatan_standard.jpg',
+        '02_FLOOR PLAN.webp',
+        '02_SECTION.webp',
+        '03_PLAN_FLOOR 01.webp',
+        '03_PLAN_FLOOR 02.webp',
+        '03_SECTIONS.webp',
+        '04_FLOOR PLAN.webp',
+        '04_SECTION_A.webp',
+        '04_SECTION_B.webp',
+        '06_PLAN_FLOOR 01.webp',
+        '06_PLAN_FLOOR 02.webp',
+        '06_PLAN_FLOOR 03.webp',
+        '06_PLAN_FLOOR 04.webp',
+        '06_PLAN_FLOOR 05.webp',
+        '06_PLAN_FLOOR 06.webp',
+        '06_SECTION_A.webp',
+        '06_SECTION_B.webp',
+        '07_PLAN_DIAGRAM 01.webp',
+        '07_PLAN_DIAGRAM 02.webp',
+        '07_PLAN_FLOOR 02_OPTIMIZED.webp',
+        '07_PLAN_OPTIMIZED.webp',
+        '07_SECTION_A_OPTIMIZED.webp',
+        '07_SECTION_DIAGRAM 01.webp',
+        '07_SECTION_OPTIMIZED.webp',
+        '08_PLAN_FLOOR 00.webp',
+        '08_PLAN_FLOOR 01.webp',
+        '08_PLAN_FLOOR 02.webp',
+        '08_PLAN_FLOOR 03.webp',
+        '08_PLAN_FLOOR 04.webp',
+        '08_PLAN_FLOOR 05.webp',
+        '08_SECTION.webp',
+        '09_COMBINATION_01.webp',
+        '09_COMBINATION_02.webp',
+        '09_SECTION_01_01.webp',
+        '09_SECTION_01_02.webp',
+        '09_SECTION_01_03.webp',
+        '09_SECTION_01_04.webp',
+        '09_SECTION_01_05.webp',
+        '09_SECTION_01_06.webp',
+        '09_SECTION_01_07.webp',
+        '09_SECTION_01_08.webp',
+        '09_SECTION_01_09.webp',
+        '09_SECTION_02_01.webp',
+        '09_SECTION_02_02.webp',
+        '09_SECTION_02_03.webp',
+        '09_SECTION_02_04.webp',
+        '09_SECTION_02_05.webp',
+        '09_SECTION_02_06.webp',
+        '09_SECTION_02_07.webp',
+        '09_SECTION_02_08.webp',
+        '09_SECTION_02_09.webp',
       ];
 
       // Stepped cell sizes — pinch in / scroll down = smaller, pinch out / scroll up = larger
@@ -87,7 +137,7 @@
         const cell = document.createElement('div');
         cell.className = 'cell hidden';
         const img = document.createElement('img');
-        img.src = `images/${images[Math.floor(Math.random() * images.length)]}`;
+        img.src = `images/${COLLECTION}/${images[Math.floor(Math.random() * images.length)]}`;
         img.alt = '';
         img.loading = 'lazy';
         const zoom = 1 + Math.random() * 1.5;
