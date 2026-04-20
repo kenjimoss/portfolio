@@ -56,37 +56,68 @@
     </div>
 
     <script>
-      const COLLECTION = 'collection_03_contrast site images_01';
-      const images = [
-        'IMG_0005.webp',
-        'IMG_0013.webp',
-        'IMG_0046.webp',
-        'IMG_0055.webp',
-        'IMG_0062.webp',
-        'IMG_0068.webp',
-        'IMG_0098.webp',
-        'IMG_0108.webp',
-        'IMG_0111.webp',
-        'IMG_0117.webp',
-        'IMG_0124.webp',
-        'IMG_0129.webp',
-        'IMG_0164.webp',
-        'IMG_9879.webp',
-        'IMG_9882.webp',
-        'IMG_9883.webp',
-        'IMG_9893.webp',
-        'IMG_9908.webp',
-        'IMG_9916.webp',
-        'IMG_9938.webp',
-        'IMG_9972.webp',
-        'IMG_9974.webp',
-        'IMG_9976.webp',
-        'IMG_9981.webp',
-        'IMG_9985.webp',
-        'IMG_9991.webp',
-        'IMG_9992.webp',
-        'IMG_9996.webp',
-      ];
+      const COLLECTIONS = {
+        'collection_02_plan and section drawings': [
+          '02_FLOOR PLAN.webp','02_SECTION.webp','03_PLAN_FLOOR 01.webp',
+          '03_PLAN_FLOOR 02.webp','03_SECTIONS.webp','04_FLOOR PLAN.webp',
+          '04_SECTION_A.webp','04_SECTION_B.webp','06_PLAN_FLOOR 01.webp',
+          '06_PLAN_FLOOR 02.webp','06_PLAN_FLOOR 03.webp','06_PLAN_FLOOR 04.webp',
+          '06_PLAN_FLOOR 05.webp','06_PLAN_FLOOR 06.webp','06_SECTION_A.webp',
+          '06_SECTION_B.webp','07_PLAN_DIAGRAM 01.webp','07_PLAN_DIAGRAM 02.webp',
+          '07_PLAN_FLOOR 02_OPTIMIZED.webp','07_PLAN_OPTIMIZED.webp',
+          '07_SECTION_A_OPTIMIZED.webp','07_SECTION_DIAGRAM 01.webp',
+          '07_SECTION_OPTIMIZED.webp','08_PLAN_FLOOR 00.webp','08_PLAN_FLOOR 01.webp',
+          '08_PLAN_FLOOR 02.webp','08_PLAN_FLOOR 03.webp','08_PLAN_FLOOR 04.webp',
+          '08_PLAN_FLOOR 05.webp','08_SECTION.webp','09_COMBINATION_01.webp',
+          '09_COMBINATION_02.webp','09_SECTION_01_01.webp','09_SECTION_01_02.webp',
+          '09_SECTION_01_03.webp','09_SECTION_01_04.webp','09_SECTION_01_05.webp',
+          '09_SECTION_01_06.webp','09_SECTION_01_07.webp','09_SECTION_01_08.webp',
+          '09_SECTION_01_09.webp','09_SECTION_02_01.webp','09_SECTION_02_02.webp',
+          '09_SECTION_02_03.webp','09_SECTION_02_04.webp','09_SECTION_02_05.webp',
+          '09_SECTION_02_06.webp','09_SECTION_02_07.webp','09_SECTION_02_08.webp',
+          '09_SECTION_02_09.webp',
+        ],
+        'collection_05_furniture_original': [
+          'furniture_01.avif','furniture_02.avif','furniture_03.avif',
+          'furniture_04.avif','furniture_05.avif','furniture_06.avif',
+          'furniture_07.avif','furniture_08.avif','furniture_09.avif',
+          'furniture_10.avif','furniture_11.avif','furniture_12.avif',
+          'furniture_13.avif','furniture_14.avif','furniture_15.avif',
+          'furniture_16.avif','furniture_17.avif','furniture_18.avif',
+          'furniture_19.avif','furniture_20.avif','furniture_21.avif',
+          'furniture_22.avif','furniture_23.avif','furniture_24.avif',
+          'furniture_25.avif','furniture_26.avif',
+        ],
+        'collection_04_fashion runways_original': [
+          'dior_ss26_01.avif','dior_ss26_02.avif','dior_ss26_03.avif',
+          'dior_ss26_04.avif','dior_ss26_05.avif',
+          'iris van herpen_ss26_01.avif','iris van herpen_ss26_02.avif',
+          'iris van herpen_ss26_03.avif','iris van herpen_ss26_04.avif',
+          'iris van herpen_ss26_05.avif','issey miyake_ss26_01.avif',
+          'issey miyake_ss26_02.avif','issey miyake_ss26_03.avif',
+          'issey miyake_ss26_04.avif','issey miyake_ss26_05.avif',
+          'schiaparelli_ss26_01.webp','schiaparelli_ss26_02.webp',
+          'schiaparelli_ss26_03.webp','schiaparelli_ss26_04.webp',
+          'schiaparelli_ss26_05.webp','schiaparelli_ss26_06.webp',
+          'tamara ralph_ss26_01.webp','tamara ralph_ss26_02.webp',
+          'tamara ralph_ss26_03.webp','tamara ralph_ss26_04.webp',
+          'tamara ralph_ss26_05.webp','valentino_ss26_01.avif',
+          'valentino_ss26_02.avif','valentino_ss26_03.avif',
+          'valentino_ss26_04.avif','valentino_ss26_05.avif',
+        ],
+        'collection_03_contrast site images_01': [
+          'IMG_0005.webp','IMG_0013.webp','IMG_0046.webp','IMG_0055.webp',
+          'IMG_0062.webp','IMG_0068.webp','IMG_0098.webp','IMG_0108.webp',
+          'IMG_0111.webp','IMG_0117.webp','IMG_0124.webp','IMG_0129.webp',
+          'IMG_0164.webp','IMG_9879.webp','IMG_9882.webp','IMG_9883.webp',
+          'IMG_9893.webp','IMG_9908.webp','IMG_9916.webp','IMG_9938.webp',
+          'IMG_9972.webp','IMG_9974.webp','IMG_9976.webp','IMG_9981.webp',
+          'IMG_9985.webp','IMG_9991.webp','IMG_9992.webp','IMG_9996.webp',
+        ],
+      };
+
+      let currentCollection = 'collection_03_contrast site images_01';
+      let images = COLLECTIONS[currentCollection];
 
       // Stepped cell sizes — pinch in / scroll down = smaller, pinch out / scroll up = larger
       const CELL_STEPS = [10, 25, 40, 55, 70];
@@ -260,6 +291,23 @@
           }
         }
       }
+
+      window.__switchCollection = function(name) {
+        if (!COLLECTIONS[name] || name === currentCollection) return;
+        currentCollection = name;
+        images = COLLECTIONS[name];
+        cellElements.forEach(cell => {
+          const img = cell.querySelector('img');
+          img.src = `images/${currentCollection}/${images[Math.floor(Math.random() * images.length)]}`;
+          const zoom = 1 + Math.random() * 1.5;
+          const rot  = Math.floor(Math.random() * 4) * 90;
+          const ox   = Math.random() * 100;
+          const oy   = Math.random() * 100;
+          img.style.transform       = `scale(${zoom}) rotate(${rot}deg)`;
+          img.style.transformOrigin = '50% 50%';
+          img.style.objectPosition  = `${ox}% ${oy}%`;
+        });
+      };
 
       window.__shapeUpdate = function(data) {
         lastVertices = (data.vertices && data.vertices.length > 0) ? data.vertices : null;
