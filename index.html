@@ -309,6 +309,28 @@
         });
       };
 
+      window.__setMixedCollections = function(nameA, nameB) {
+        const imgsA = COLLECTIONS[nameA] || [];
+        const imgsB = COLLECTIONS[nameB] || [];
+        const pool = [];
+        imgsA.forEach(f => pool.push({ collection: nameA, filename: f }));
+        imgsB.forEach(f => pool.push({ collection: nameB, filename: f }));
+        if (!pool.length) return;
+        currentCollection = null;
+        cellElements.forEach(cell => {
+          const entry = pool[Math.floor(Math.random() * pool.length)];
+          const img = cell.querySelector('img');
+          img.src = `images/${entry.collection}/${entry.filename}`;
+          const zoom = 1 + Math.random() * 1.5;
+          const rot  = Math.floor(Math.random() * 4) * 90;
+          const ox   = Math.random() * 100;
+          const oy   = Math.random() * 100;
+          img.style.transform       = `scale(${zoom}) rotate(${rot}deg)`;
+          img.style.transformOrigin = '50% 50%';
+          img.style.objectPosition  = `${ox}% ${oy}%`;
+        });
+      };
+
       window.__shapeUpdate = function(data) {
         lastVertices = (data.vertices && data.vertices.length > 0) ? data.vertices : null;
         lastHoles    = (data.holes    && data.holes.length    > 0) ? data.holes    : null;
