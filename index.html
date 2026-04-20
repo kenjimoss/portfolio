@@ -146,7 +146,7 @@
         const cell = document.createElement('div');
         cell.className = 'cell hidden';
         const img = document.createElement('img');
-        img.src = `images/${COLLECTION}/${images[Math.floor(Math.random() * images.length)]}`;
+        img.src = `images/${currentCollection}/${images[Math.floor(Math.random() * images.length)]}`;
         img.alt = '';
         img.loading = 'lazy';
         const zoom = 1 + Math.random() * 1.5;
