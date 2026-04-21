@@ -429,10 +429,10 @@
           const dist  = pinchDist();
           const ratio = dist / pinchStartDist;
 
-          if (ratio <= 0.7) {
+          if (ratio <= 0.82) {
             applyStep(stepIndex - 1);
             pinchStartDist = dist; // reset so next step requires another full threshold
-          } else if (ratio >= 1.4) {
+          } else if (ratio >= 1.18) {
             applyStep(stepIndex + 1);
             pinchStartDist = dist;
           }
