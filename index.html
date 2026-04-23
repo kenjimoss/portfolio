@@ -122,10 +122,10 @@
       const CELL_MIN = 10, CELL_MAX = 70;
       let cellSize = 40;
 
-      // Pre-create enough cells to cover the viewport at the smallest step (15px).
-      // At larger steps the same cell count covers more area — always over-covered.
-      const GRID_COLS  = Math.ceil(screen.availWidth  / CELL_STEPS[0]) + 4;
-      const GRID_ROWS  = Math.ceil(screen.availHeight / CELL_STEPS[0]) + 4;
+      // Pre-create enough cells to cover the viewport at the minimum cell size.
+      // At larger sizes the same cell count covers more area — always over-covered.
+      const GRID_COLS  = Math.ceil(screen.availWidth  / CELL_MIN) + 4;
+      const GRID_ROWS  = Math.ceil(screen.availHeight / CELL_MIN) + 4;
       const TOTAL_CELLS = GRID_COLS * GRID_ROWS;
 
       // Derived dimensions — updated by applyStep()
