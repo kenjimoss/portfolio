@@ -119,10 +119,8 @@
       let currentCollection = 'collection_02_plan and section drawings';
       let images = COLLECTIONS[currentCollection];
 
-      // Stepped cell sizes — pinch in / scroll down = smaller, pinch out / scroll up = larger
-      const CELL_STEPS = [10, 25, 40, 55, 70];
-      let stepIndex = 2;                     // start at 40px (middle)
-      let cellSize  = CELL_STEPS[stepIndex];
+      const CELL_MIN = 10, CELL_MAX = 70;
+      let cellSize = 40;
 
       // Pre-create enough cells to cover the viewport at the smallest step (15px).
       // At larger steps the same cell count covers more area — always over-covered.
@@ -162,11 +160,10 @@
         img.addEventListener('dblclick', () => openImage(img));
       }
 
-      function applyStep(newIndex) {
-        newIndex = Math.max(0, Math.min(CELL_STEPS.length - 1, newIndex));
-        if (newIndex === stepIndex) return;
-        stepIndex = newIndex;
-        cellSize  = CELL_STEPS[stepIndex];
+      function applyCellSize(newSize) {
+        newSize = Math.max(CELL_MIN, Math.min(CELL_MAX, newSize));
+        if (newSize === cellSize) return;
+        cellSize    = newSize;
         GRID_WIDTH  = GRID_COLS * cellSize;
         GRID_HEIGHT = GRID_ROWS * cellSize;
         gridContainer.style.setProperty('--cell-size', cellSize + 'px');
@@ -400,14 +397,14 @@
       // Mouse wheel — scroll down = smaller cells, scroll up = larger cells
       document.addEventListener('wheel', (e) => {
         e.preventDefault();
-        if (e.deltaY > 0) applyStep(stepIndex - 1);
-        else              applyStep(stepIndex + 1);
+        applyCellSize(cellSize + (e.deltaY > 0 ? -5 : 5));
       }, { passive: false });
 
-      // Pinch — two-finger pinch in = smaller cells, pinch out = larger cells
+      // Pinch — continuously maps finger distance to cell size
       {
         const pinchPointers = new Map(); // pointerId → { x, y }
-        let pinchStartDist = null;
+        let pinchStartDist     = null;
+        let pinchStartCellSize = cellSize;
 
         function pinchDist() {
           const [a, b] = [...pinchPointers.values()];
@@ -418,7 +415,10 @@
         document.addEventListener('pointerdown', (e) => {
           if (e.pointerType !== 'touch') return;
           pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (pinchPointers.size === 2) pinchStartDist = pinchDist();
+          if (pinchPointers.size === 2) {
+            pinchStartDist     = pinchDist();
+            pinchStartCellSize = cellSize;
+          }
         });
 
         document.addEventListener('pointermove', (e) => {
@@ -426,16 +426,8 @@
           pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (pinchPointers.size < 2 || pinchStartDist === null) return;
 
-          const dist  = pinchDist();
-          const ratio = dist / pinchStartDist;
-
-          if (ratio <= 0.82) {
-            applyStep(stepIndex - 1);
-            pinchStartDist = dist; // reset so next step requires another full threshold
-          } else if (ratio >= 1.18) {
-            applyStep(stepIndex + 1);
-            pinchStartDist = dist;
-          }
+          const ratio = pinchDist() / pinchStartDist;
+          applyCellSize(pinchStartCellSize * ratio);
         });
 
         const endPinch = (e) => {
