@@ -164,7 +164,7 @@
       }
 
       function applyCellSize(newSize) {
-        newSize = Math.max(CELL_MIN, Math.min(CELL_MAX, newSize));
+        newSize = Math.round(Math.max(CELL_MIN, Math.min(CELL_MAX, newSize)));
         if (newSize === cellSize) return;
         cellSize    = newSize;
         GRID_WIDTH  = GRID_COLS * cellSize;
